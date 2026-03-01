@@ -1,0 +1,17 @@
+{
+    "slug": "tfidf-analyzer",
+    "name": "TF-IDF Analyzer",
+    "description": "Analyse TF-IDF comparative entre une page cible et ses concurrents SERP pour identifier le gap sémantique",
+    "version": "1.0.0",
+    "icon": "bi-bar-chart-steps",
+    "entry_point": "index.php",
+    "sort_order": 55,
+    "quota_mode": "api_call",
+    "default_quota": 100,
+    "display_mode": "embedded",
+    "env_keys": [],
+    "languages": [],
+    "routes": [
+        { "path": "stream.php", "method": "GET", "type": "stream" }
+    ]
+}
