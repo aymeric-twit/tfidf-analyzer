@@ -2,12 +2,65 @@
  * app.js — TF-IDF Analyzer
  * Gestion du formulaire (mode auto/manuel), streaming SSE, affichage et export.
  */
+
+// --- i18n ---
+var langueActuelle = (function () {
+    if (typeof window.PLATFORM_LANG === 'string' && window.PLATFORM_LANG) return window.PLATFORM_LANG;
+    try { var p = new URLSearchParams(window.location.search).get('lg'); if (p) return p; } catch (_) {}
+    try { var s = localStorage.getItem('lang'); if (s) return s; } catch (_) {}
+    return 'fr';
+})();
+
+function t(cle, params) {
+    var trad = (typeof TRANSLATIONS !== 'undefined' && TRANSLATIONS[langueActuelle] && TRANSLATIONS[langueActuelle][cle])
+        ? TRANSLATIONS[langueActuelle][cle]
+        : (typeof TRANSLATIONS !== 'undefined' && TRANSLATIONS.fr && TRANSLATIONS.fr[cle])
+            ? TRANSLATIONS.fr[cle]
+            : cle;
+    if (params) {
+        Object.keys(params).forEach(function (k) {
+            trad = trad.replace(new RegExp('\\{' + k + '\\}', 'g'), params[k]);
+        });
+    }
+    return trad;
+}
+
+function traduirePage() {
+    document.querySelectorAll('[data-i18n]').forEach(function (el) {
+        el.innerHTML = t(el.getAttribute('data-i18n'));
+    });
+    document.querySelectorAll('[data-i18n-placeholder]').forEach(function (el) {
+        el.placeholder = t(el.getAttribute('data-i18n-placeholder'));
+    });
+}
+
+function changerLangue(lng) {
+    langueActuelle = lng;
+    try { localStorage.setItem('lang', lng); } catch (_) {}
+    traduirePage();
+}
+
+function initLangueSelect() {
+    var select = document.getElementById('lang-select');
+    if (!select) return;
+    select.value = langueActuelle;
+    select.addEventListener('change', function () {
+        changerLangue(this.value);
+    });
+}
+
+if (typeof window !== 'undefined') {
+    window.addEventListener('platformLangChange', function (e) {
+        if (e.detail && e.detail.lang) changerLangue(e.detail.lang);
+    });
+}
+
 (function () {
     'use strict';
 
     // ─── Configuration ───────────────────────────────────────────────────────
 
-    var BASE_URL = (window.MODULE_BASE_URL || '.');
+    var baseUrl = window.MODULE_BASE_URL || '.';
     var PAGE_SIZE = 25;
 
     // ─── État ────────────────────────────────────────────────────────────────
@@ -70,6 +123,10 @@
         });
     });
 
+    // i18n au chargement
+    traduirePage();
+    initLangueSelect();
+
     function basculerMode() {
         var estAuto = modeAuto.checked;
         champMotCle.classList.toggle('d-none', !estAuto);
@@ -94,17 +151,17 @@
         var urlsManuelles = inputUrlsManuelles.value.trim();
 
         if (!urlCible) {
-            afficherStatus('Veuillez remplir l\'URL cible.', 'error');
+            afficherStatus(t('error.url_cible_vide'), 'error');
             return;
         }
 
         if (mode === 'auto' && !motCle) {
-            afficherStatus('Veuillez remplir le mot-clé en mode automatique.', 'error');
+            afficherStatus(t('error.mot_cle_vide'), 'error');
             return;
         }
 
         if (mode === 'manuel' && !urlsManuelles) {
-            afficherStatus('Veuillez fournir au moins une URL concurrente.', 'error');
+            afficherStatus(t('error.urls_manuelles_vide'), 'error');
             return;
         }
 
@@ -117,7 +174,7 @@
         carteProgression.classList.remove('d-none');
         btnLancer.disabled = true;
         btnArreter.classList.remove('d-none');
-        mettreAJourProgression(0, 'Initialisation…');
+        mettreAJourProgression(0, t('status.initialisation'));
 
         // Construire les paramètres
         var params = new URLSearchParams({
@@ -132,7 +189,7 @@
         }
 
         // Ouvrir la connexion SSE
-        eventSource = new EventSource(BASE_URL + '/stream.php?' + params.toString());
+        eventSource = new EventSource(baseUrl + '/stream.php?' + params.toString());
 
         eventSource.addEventListener('log', function (e) {
             var data = JSON.parse(e.data);
@@ -148,11 +205,11 @@
         eventSource.addEventListener('error', function (e) {
             if (e.data) {
                 var data = JSON.parse(e.data);
-                afficherStatus(data.message || 'Erreur de connexion.', 'error');
+                afficherStatus(data.message || t('error.connexion'), 'error');
             } else if (eventSource && eventSource.readyState === EventSource.CLOSED) {
-                afficherStatus('Connexion terminée par le serveur.', 'error');
+                afficherStatus(t('error.connexion_serveur'), 'error');
             } else {
-                afficherStatus('Connexion interrompue avec le serveur.', 'error');
+                afficherStatus(t('error.connexion_interrompue'), 'error');
             }
 
             if (eventSource) {
@@ -168,7 +225,7 @@
             eventSource.close();
             eventSource = null;
         }
-        afficherStatus('Analyse annulée.', 'warning');
+        afficherStatus(t('status.analyse_annulee'), 'warning');
         resetUI();
     }
 
@@ -201,9 +258,9 @@
 
         // Mettre à jour les KPI
         var nbOK = 0, nbRenforcer = 0, nbAjouter = 0;
-        resultats.forEach(function (t) {
-            if (t.recommandation === 'OK') nbOK++;
-            else if (t.recommandation === 'À renforcer') nbRenforcer++;
+        resultats.forEach(function (terme) {
+            if (terme.recommandation === 'OK') nbOK++;
+            else if (terme.recommandation === 'À renforcer') nbRenforcer++;
             else nbAjouter++;
         });
 
@@ -215,8 +272,7 @@
         kpiConcurrents.textContent = data.nb_concurrents_ok + '/' + data.nb_concurrents;
 
         afficherStatus(
-            'Analyse terminée — ' + resultats.length + ' termes analysés sur '
-            + data.nb_termes_analyses + ' termes significatifs.',
+            t('status.analyse_terminee', { nb: resultats.length, total: data.nb_termes_analyses }),
             'success'
         );
 
@@ -234,9 +290,9 @@
         var recherche = champRecherche.value.trim().toLowerCase();
         var filtre = filtreRecommandation.value;
 
-        resultatsFiltres = resultats.filter(function (t) {
-            if (filtre !== 'tous' && t.recommandation !== filtre) return false;
-            if (recherche && t.terme.toLowerCase().indexOf(recherche) === -1) return false;
+        resultatsFiltres = resultats.filter(function (terme) {
+            if (filtre !== 'tous' && terme.recommandation !== filtre) return false;
+            if (recherche && terme.terme.toLowerCase().indexOf(recherche) === -1) return false;
             return true;
         });
 
@@ -286,15 +342,15 @@
         var pageItems = resultatsFiltres.slice(debut, fin);
 
         var html = '';
-        pageItems.forEach(function (t) {
+        pageItems.forEach(function (terme) {
             html += '<tr>'
-                + '<td class="fw-600">' + escHtml(t.terme) + '</td>'
-                + '<td>' + formatScore(t.score_concurrents) + '</td>'
-                + '<td>' + formatScore(t.score_cible) + '</td>'
-                + '<td>' + formatRatio(t.ratio) + '</td>'
-                + '<td>' + formatBalises(t.balises_cible) + '</td>'
-                + '<td>' + formatBalises(t.balises_concurrents) + '</td>'
-                + '<td>' + badgeRecommandation(t.recommandation) + '</td>'
+                + '<td class="fw-600">' + escHtml(terme.terme) + '</td>'
+                + '<td>' + formatScore(terme.score_concurrents) + '</td>'
+                + '<td>' + formatScore(terme.score_cible) + '</td>'
+                + '<td>' + formatRatio(terme.ratio) + '</td>'
+                + '<td>' + formatBalises(terme.balises_cible) + '</td>'
+                + '<td>' + formatBalises(terme.balises_concurrents) + '</td>'
+                + '<td>' + badgeRecommandation(terme.recommandation) + '</td>'
                 + '</tr>';
         });
 
@@ -302,11 +358,11 @@
 
         var total = resultatsFiltres.length;
         if (total === 0) {
-            infoPages.textContent = 'Aucun résultat';
+            infoPages.textContent = t('table.aucun_resultat');
             pagination.innerHTML = '';
             return;
         }
-        infoPages.textContent = (debut + 1) + '–' + fin + ' sur ' + total + ' termes';
+        infoPages.textContent = t('table.info_pages', { debut: debut + 1, fin: fin, total: total });
 
         var nbPages = Math.ceil(total / PAGE_SIZE);
         construirePagination(nbPages, page);
@@ -380,16 +436,21 @@
     }
 
     function badgeRecommandation(reco) {
-        var classe = 'badge-succes';
-        var icone = 'bi-check-circle-fill';
+        var cleTraduction, classe, icone;
         if (reco === 'À renforcer') {
+            cleTraduction = 'reco.a_renforcer';
             classe = 'badge-attention';
             icone = 'bi-exclamation-triangle-fill';
         } else if (reco === 'À ajouter') {
+            cleTraduction = 'reco.a_ajouter';
             classe = 'badge-erreur';
             icone = 'bi-plus-circle-fill';
+        } else {
+            cleTraduction = 'reco.ok';
+            classe = 'badge-succes';
+            icone = 'bi-check-circle-fill';
         }
-        return '<span class="' + classe + '"><i class="bi ' + icone + ' me-1"></i>' + escHtml(reco) + '</span>';
+        return '<span class="' + classe + '"><i class="bi ' + icone + ' me-1"></i>' + escHtml(t(cleTraduction)) + '</span>';
     }
 
     function couleurScore(score) {
@@ -422,27 +483,27 @@
         if (!resultatsFiltres.length) return;
 
         var colonnes = [
-            'Terme',
-            'Score concurrents',
-            'Score cible',
-            'Ratio',
-            'Balises cible',
-            'Balises concurrents',
-            'Recommandation',
-            'Nb concurrents'
+            t('csv.terme'),
+            t('csv.score_concurrents'),
+            t('csv.score_cible'),
+            t('csv.ratio'),
+            t('csv.balises_cible'),
+            t('csv.balises_concurrents'),
+            t('csv.recommandation'),
+            t('csv.nb_concurrents')
         ];
         var lignes = [colonnes.join(';')];
 
-        resultatsFiltres.forEach(function (t) {
+        resultatsFiltres.forEach(function (terme) {
             lignes.push([
-                '"' + t.terme.replace(/"/g, '""') + '"',
-                t.score_concurrents,
-                t.score_cible,
-                t.ratio,
-                '"' + (t.balises_cible || []).join(', ') + '"',
-                '"' + (t.balises_concurrents || []).join(', ') + '"',
-                '"' + t.recommandation + '"',
-                t.nb_concurrents
+                '"' + terme.terme.replace(/"/g, '""') + '"',
+                terme.score_concurrents,
+                terme.score_cible,
+                terme.ratio,
+                '"' + (terme.balises_cible || []).join(', ') + '"',
+                '"' + (terme.balises_concurrents || []).join(', ') + '"',
+                '"' + terme.recommandation + '"',
+                terme.nb_concurrents
             ].join(';'));
         });
 
