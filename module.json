@@ -10,8 +10,17 @@
     "default_quota": 100,
     "display_mode": "embedded",
     "env_keys": [],
-    "languages": ["fr", "en"],
+    "languages": [
+        "fr",
+        "en"
+    ],
+    "api_credits_period": "mensuel",
+    "api_credits_default": 0,
     "routes": [
-        { "path": "stream.php", "method": "GET", "type": "stream" }
+        {
+            "path": "stream.php",
+            "method": "GET",
+            "type": "stream"
+        }
     ]
 }
