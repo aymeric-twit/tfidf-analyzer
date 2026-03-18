@@ -174,6 +174,18 @@ function nettoyerCache(): void
  */
 function requeteHttp(string $url): array
 {
+    // Mode plateforme : client HTTP centralise (WebClient pour le crawl de pages)
+    if (defined('PLATFORM_EMBEDDED') && class_exists('\\Platform\\Http\\WebClient')) {
+        $webClient = new \Platform\Http\WebClient('tfidf-analyzer');
+        $reponse = $webClient->fetch($url);
+        return [
+            'code'   => $reponse->statusCode,
+            'body'   => $reponse->body,
+            'erreur' => $reponse->estSucces() ? '' : 'HTTP ' . $reponse->statusCode,
+        ];
+    }
+
+    // Mode standalone : curl natif
     $ch = curl_init();
 
     curl_setopt_array($ch, [
@@ -221,156 +233,143 @@ function requeteHttp(string $url): array
     ];
 }
 
-// ─── Récupération SERP (scraping Bing) ───────────────────────────────────────
-
 /**
- * Scrape les résultats organiques Bing pour récupérer les URLs concurrentes.
- * Bing est beaucoup plus tolérant que Google pour le scraping.
+ * Effectue une requête HTTP GET vers une API JSON (sans headers navigateur).
  *
- * @return array{urls: string[], erreur: string}
+ * @return array{code: int, body: string, erreur: string}
  */
-function recupererResultatsSERP(string $motCle): array
+function requeteApi(string $url): array
 {
-    $url = 'https://www.bing.com/search?' . http_build_query([
-        'q'     => $motCle,
-        'count' => NB_CONCURRENTS + 5,
-        'setlang' => 'fr',
-        'cc'    => 'FR',
-    ]);
+    // Mode plateforme : client HTTP centralise (ApiClient pour les API JSON)
+    if (defined('PLATFORM_EMBEDDED') && class_exists('\\Platform\\Http\\ApiClient')) {
+        $apiClient = new \Platform\Http\ApiClient('tfidf-analyzer');
+        $reponse = $apiClient->get($url, [], ['Accept' => 'application/json']);
+        return [
+            'code'   => $reponse->statusCode,
+            'body'   => $reponse->body,
+            'erreur' => $reponse->estSucces() ? '' : 'HTTP ' . $reponse->statusCode,
+        ];
+    }
 
+    // Mode standalone : curl natif
     $ch = curl_init();
+
     curl_setopt_array($ch, [
         CURLOPT_URL            => $url,
         CURLOPT_RETURNTRANSFER => true,
         CURLOPT_FOLLOWLOCATION => true,
         CURLOPT_MAXREDIRS      => 3,
-        CURLOPT_TIMEOUT        => 15,
+        CURLOPT_TIMEOUT        => TIMEOUT_REQUETE,
         CURLOPT_CONNECTTIMEOUT => 10,
         CURLOPT_SSL_VERIFYPEER => true,
-        CURLOPT_ENCODING       => '',
-        CURLOPT_USERAGENT      => 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36',
         CURLOPT_HTTPHEADER     => [
-            'Accept: text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8',
-            'Accept-Language: fr-FR,fr;q=0.9,en-US;q=0.8,en;q=0.7',
+            'Accept: application/json',
         ],
+        CURLOPT_ENCODING       => '',
     ]);
 
-    $html = curl_exec($ch);
+    $body = curl_exec($ch);
     $codeHttp = (int)curl_getinfo($ch, CURLINFO_HTTP_CODE);
     $erreur = curl_error($ch);
     curl_close($ch);
 
-    if ($erreur !== '') {
-        return ['urls' => [], 'erreur' => "Erreur cURL : {$erreur}"];
+    return [
+        'code'   => $codeHttp,
+        'body'   => is_string($body) ? $body : '',
+        'erreur' => $erreur,
+    ];
+}
+
+// ─── Récupération SERP (SerpAPI — Google) ────────────────────────────────────
+
+/**
+ * Récupère les résultats organiques Google via SerpAPI.
+ * Nécessite la variable d'environnement SERPAPI_KEY.
+ *
+ * @return array{urls: string[], erreur: string}
+ */
+function recupererResultatsSERP(string $motCle): array
+{
+    $cleApi = $_ENV['SERPAPI_KEY'] ?? getenv('SERPAPI_KEY') ?: '';
+    if ($cleApi === '') {
+        return ['urls' => [], 'erreur' => 'Clé API SerpAPI manquante. Configurez SERPAPI_KEY dans le .env de la plateforme.'];
     }
 
-    if ($codeHttp === 429 || $codeHttp === 503) {
-        return ['urls' => [], 'erreur' => "Bing a limité les requêtes (HTTP {$codeHttp}). Réessayez dans quelques instants ou utilisez le mode manuel."];
+    $url = 'https://serpapi.com/search.json?' . http_build_query([
+        'q'      => $motCle,
+        'num'    => NB_CONCURRENTS + 5,
+        'gl'     => 'fr',
+        'hl'     => 'fr',
+        'engine' => 'google',
+        'api_key' => $cleApi,
+    ]);
+
+    $reponse = requeteApi($url);
+
+    if ($reponse['erreur'] !== '') {
+        return ['urls' => [], 'erreur' => "Erreur SerpAPI : {$reponse['erreur']}"];
     }
 
-    if ($codeHttp !== 200 || !$html) {
-        return ['urls' => [], 'erreur' => "Réponse Bing inattendue (HTTP {$codeHttp})."];
+    if ($reponse['code'] === 401 || $reponse['code'] === 403) {
+        return ['urls' => [], 'erreur' => 'Clé API SerpAPI invalide ou expirée.'];
     }
 
-    return ['urls' => extraireUrlsBing($html), 'erreur' => ''];
+    if ($reponse['code'] === 429) {
+        return ['urls' => [], 'erreur' => 'Quota SerpAPI épuisé. Réessayez plus tard ou utilisez le mode manuel.'];
+    }
+
+    if ($reponse['code'] !== 200 || $reponse['body'] === '') {
+        return ['urls' => [], 'erreur' => "Réponse SerpAPI inattendue (HTTP {$reponse['code']})."];
+    }
+
+    $donnees = json_decode($reponse['body'], true);
+    if (!is_array($donnees)) {
+        return ['urls' => [], 'erreur' => 'Réponse SerpAPI invalide (JSON malformé).'];
+    }
+
+    if (isset($donnees['error'])) {
+        return ['urls' => [], 'erreur' => "Erreur SerpAPI : {$donnees['error']}"];
+    }
+
+    $urls = extraireUrlsSerpApi($donnees);
+
+    if (empty($urls)) {
+        $nbOrganiques = count($donnees['organic_results'] ?? []);
+        if ($nbOrganiques === 0) {
+            // Vérifier si la réponse contient des clés attendues
+            $clesPresentes = implode(', ', array_keys($donnees));
+            return ['urls' => [], 'erreur' => "SerpAPI n'a retourné aucun résultat organique. Clés reçues : {$clesPresentes}"];
+        }
+        return ['urls' => [], 'erreur' => "{$nbOrganiques} résultat(s) organique(s) trouvé(s) mais tous filtrés (domaines exclus)."];
+    }
+
+    return ['urls' => $urls, 'erreur' => ''];
 }
 
 /**
- * Parse le HTML de la SERP Bing pour en extraire les URLs organiques.
- * Bing encapsule les URLs dans des redirects : bing.com/ck/a?...&u=a1<base64>
- * Il faut décoder le paramètre "u" pour obtenir l'URL réelle.
+ * Extrait les URLs organiques depuis la réponse JSON de SerpAPI.
  *
+ * @param array<string, mixed> $donnees Réponse JSON décodée de SerpAPI
  * @return string[]
  */
-function extraireUrlsBing(string $html): array
+function extraireUrlsSerpApi(array $donnees): array
 {
     $urls = [];
 
-    // Décoder les entités HTML pour simplifier le parsing des URLs
-    $htmlDecode = html_entity_decode($html, ENT_QUOTES | ENT_HTML5, 'UTF-8');
+    $resultatsOrganiques = $donnees['organic_results'] ?? [];
 
-    // Méthode 1 : extraire les URLs encodées en base64 dans les redirects Bing
-    // Format : href="https://www.bing.com/ck/a?...&u=a1<base64_url>&..."
-    if (preg_match_all('#<h2[^>]*>\s*<a[^>]+href="[^"]*[&?]u=a1([A-Za-z0-9_-]+)[^"]*"#si', $htmlDecode, $matches)) {
-        foreach ($matches[1] as $base64Url) {
-            $urlDecodee = decoderUrlBing($base64Url);
-            if ($urlDecodee !== '' && estUrlOrganique($urlDecodee)) {
-                $urls[] = $urlDecodee;
-            }
+    foreach ($resultatsOrganiques as $resultat) {
+        $url = $resultat['link'] ?? '';
+        if ($url !== '' && estUrlOrganique($url)) {
+            $urls[] = $url;
         }
     }
 
-    // Méthode 2 (fallback) : même extraction mais dans tous les li.b_algo
-    if (empty($urls)) {
-        if (preg_match_all('#class="b_algo".*?href="[^"]*[&?]u=a1([A-Za-z0-9_-]+)[^"]*"#si', $htmlDecode, $matches)) {
-            foreach ($matches[1] as $base64Url) {
-                $urlDecodee = decoderUrlBing($base64Url);
-                if ($urlDecodee !== '' && estUrlOrganique($urlDecodee)) {
-                    $urls[] = $urlDecodee;
-                }
-            }
-        }
-    }
-
-    // Méthode 3 (fallback) : tous les redirects Bing de la page
-    if (empty($urls)) {
-        if (preg_match_all('#[&?]u=a1([A-Za-z0-9_-]+)#', $htmlDecode, $matches)) {
-            foreach ($matches[1] as $base64Url) {
-                $urlDecodee = decoderUrlBing($base64Url);
-                if ($urlDecodee !== '' && estUrlOrganique($urlDecodee)) {
-                    $urls[] = $urlDecodee;
-                }
-            }
-        }
-    }
-
-    // Méthode 4 (dernier recours) : liens directs non-Bing
-    if (empty($urls)) {
-        if (preg_match_all('#href="(https?://(?!www\.bing\.com)[^"]+)"#i', $html, $matches)) {
-            foreach ($matches[1] as $urlBrute) {
-                if (estUrlOrganique($urlBrute)) {
-                    $urls[] = $urlBrute;
-                }
-            }
-        }
-    }
-
-    // Dédoublonner et limiter
-    $urls = array_values(array_unique($urls));
     return array_slice($urls, 0, NB_CONCURRENTS);
 }
 
 /**
- * Décode une URL encodée en base64 par Bing (paramètre "u=a1...").
- * Bing utilise du base64url (- au lieu de +, _ au lieu de /).
- */
-function decoderUrlBing(string $base64Url): string
-{
-    // Convertir base64url en base64 standard
-    $base64 = str_replace(['-', '_'], ['+', '/'], $base64Url);
-    // Ajouter le padding si nécessaire
-    $padding = 4 - (strlen($base64) % 4);
-    if ($padding < 4) {
-        $base64 .= str_repeat('=', $padding);
-    }
-
-    $decoded = base64_decode($base64, true);
-    if ($decoded === false) {
-        return '';
-    }
-
-    // Vérifier que c'est bien une URL
-    if (!str_starts_with($decoded, 'http')) {
-        return '';
-    }
-
-    // Nettoyer les paramètres de tracking Bing ajoutés à l'URL
-    $urlClean = preg_replace('/[?&]msockid=[^&]*/', '', $decoded);
-    return rtrim($urlClean, '?&');
-}
-
-/**
- * Vérifie qu'une URL est un résultat organique (pas un lien interne Bing/Microsoft).
+ * Vérifie qu'une URL est un résultat organique (pas un lien Google/réseaux sociaux).
  */
 function estUrlOrganique(string $url): bool
 {
@@ -383,10 +382,8 @@ function estUrlOrganique(string $url): bool
         return false;
     }
 
-    // Exclure les domaines Bing/Microsoft et autres non-organiques
+    // Exclure les domaines Google et autres non-organiques
     $exclusions = [
-        'bing.com', 'microsoft.com', 'msn.com', 'live.com',
-        'microsoftonline.com', 'office.com', 'windows.com',
         'google.com', 'google.fr', 'gstatic.com', 'googleapis.com',
         'youtube.com', 'youtu.be',
         'schema.org', 'w3.org',

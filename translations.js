@@ -11,7 +11,7 @@ var TRANSLATIONS = {
         // Formulaire
         'form.titre': '<i class="bi bi-search me-2"></i>Paramètres d\'analyse',
         'form.label_source': 'Source des concurrents',
-        'form.mode_auto': '<i class="bi bi-search me-1"></i>Automatique (Bing SERP)',
+        'form.mode_auto': '<i class="bi bi-search me-1"></i>Automatique (Google SERP)',
         'form.mode_manuel': '<i class="bi bi-list-ul me-1"></i>Manuel (URLs fournies)',
         'form.label_url_cible': 'URL cible',
         'form.placeholder_url_cible': 'https://www.example.com/page-a-analyser',
@@ -91,7 +91,7 @@ var TRANSLATIONS = {
         // Formulaire
         'form.titre': '<i class="bi bi-search me-2"></i>Analysis Parameters',
         'form.label_source': 'Competitor Source',
-        'form.mode_auto': '<i class="bi bi-search me-1"></i>Automatic (Bing SERP)',
+        'form.mode_auto': '<i class="bi bi-search me-1"></i>Automatic (Google SERP)',
         'form.mode_manuel': '<i class="bi bi-list-ul me-1"></i>Manual (Provided URLs)',
         'form.label_url_cible': 'Target URL',
         'form.placeholder_url_cible': 'https://www.example.com/page-to-analyze',

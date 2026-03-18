@@ -102,9 +102,17 @@ if ($mode === 'manuel') {
         'percent' => 10,
     ]);
 } else {
-    // Mode auto : scraper Bing SERP
+    // Mode auto : recherche Google via SerpAPI
+    $cleApi = $_ENV['SERPAPI_KEY'] ?? getenv('SERPAPI_KEY') ?: '';
+    if ($cleApi === '') {
+        envoyerEvenement('error', [
+            'message' => 'Clé API SerpAPI manquante. Configurez SERPAPI_KEY dans le .env de la plateforme.',
+        ]);
+        exit;
+    }
+
     envoyerEvenement('log', [
-        'message' => "Recherche Bing pour « {$motCle} »…",
+        'message' => "Recherche Google pour « {$motCle} »…",
         'percent' => 5,
     ]);
 
@@ -127,7 +135,7 @@ if ($mode === 'manuel') {
     }
 
     envoyerEvenement('log', [
-        'message' => count($urlsConcurrents) . ' concurrent(s) trouvé(s) sur Bing.',
+        'message' => count($urlsConcurrents) . ' concurrent(s) trouvé(s) sur Google.',
         'percent' => 10,
     ]);
 }

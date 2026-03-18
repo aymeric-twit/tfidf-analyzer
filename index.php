@@ -46,7 +46,7 @@
                         <div class="form-check">
                             <input class="form-check-input" type="radio" name="mode" id="modeAuto" value="auto" checked>
                             <label class="form-check-label" for="modeAuto" data-i18n="form.mode_auto">
-                                <i class="bi bi-search me-1"></i>Automatique (Bing SERP)
+                                <i class="bi bi-search me-1"></i>Automatique (Google SERP)
                             </label>
                         </div>
                         <div class="form-check">

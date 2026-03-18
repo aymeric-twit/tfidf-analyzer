@@ -9,7 +9,7 @@
     "quota_mode": "api_call",
     "default_quota": 100,
     "display_mode": "embedded",
-    "env_keys": [],
+    "env_keys": ["SERPAPI_KEY"],
     "languages": [
         "fr",
         "en"
