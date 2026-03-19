@@ -16,8 +16,6 @@
         "fr",
         "en"
     ],
-    "api_credits_period": "mensuel",
-    "api_credits_default": 0,
     "routes": [
         {
             "path": "stream.php",
@@ -27,5 +25,6 @@
     ],
     "credits_par_analyse": 3,
     "units_per_credit": 1,
-    "unit_label": "analyses"
+    "unit_label": "analyses",
+    "periode_quota": "mois"
 }
