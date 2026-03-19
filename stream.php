@@ -236,4 +236,9 @@ envoyerEvenement('log', [
 
 ecrireCache($cleCache, $resultats);
 
+// Décompter les crédits
+if (class_exists(\Platform\Module\Quota::class)) {
+    \Platform\Module\Quota::track('tfidf-analyzer');
+}
+
 envoyerEvenement('done', $resultats);
