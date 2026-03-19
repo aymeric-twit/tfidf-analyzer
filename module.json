@@ -9,7 +9,9 @@
     "quota_mode": "api_call",
     "default_quota": 100,
     "display_mode": "embedded",
-    "env_keys": ["SERPAPI_KEY"],
+    "env_keys": [
+        "SERPAPI_KEY"
+    ],
     "languages": [
         "fr",
         "en"
@@ -22,5 +24,8 @@
             "method": "GET",
             "type": "stream"
         }
-    ]
+    ],
+    "credits_par_analyse": 3,
+    "units_per_credit": 1,
+    "unit_label": "analyses"
 }
