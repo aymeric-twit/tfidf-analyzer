@@ -1,0 +1,34 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 140">
+  <rect width="200" height="140" fill="#f8fafc" rx="8"/>
+  <!-- Large rectangles (high score words) -->
+  <rect x="15" y="18" width="65" height="24" rx="4" fill="#004c4c"/>
+  <rect x="85" y="18" width="50" height="24" rx="4" fill="#004c4c" opacity="0.85"/>
+  <rect x="140" y="18" width="45" height="24" rx="4" fill="#66b2b2"/>
+  <!-- Medium rectangles -->
+  <rect x="15" y="48" width="45" height="20" rx="3" fill="#66b2b2"/>
+  <rect x="65" y="48" width="55" height="20" rx="3" fill="#fbb03b"/>
+  <rect x="125" y="48" width="35" height="20" rx="3" fill="#004c4c" opacity="0.7"/>
+  <rect x="165" y="48" width="22" height="20" rx="3" fill="#66b2b2" opacity="0.6"/>
+  <!-- Smaller rectangles -->
+  <rect x="15" y="74" width="38" height="17" rx="3" fill="#fbb03b" opacity="0.8"/>
+  <rect x="58" y="74" width="30" height="17" rx="3" fill="#66b2b2" opacity="0.7"/>
+  <rect x="93" y="74" width="42" height="17" rx="3" fill="#004c4c" opacity="0.6"/>
+  <rect x="140" y="74" width="28" height="17" rx="3" fill="#fbb03b" opacity="0.6"/>
+  <!-- Small rectangles (low score) -->
+  <rect x="15" y="97" width="25" height="14" rx="2" fill="#66b2b2" opacity="0.4"/>
+  <rect x="45" y="97" width="32" height="14" rx="2" fill="#004c4c" opacity="0.4"/>
+  <rect x="82" y="97" width="20" height="14" rx="2" fill="#fbb03b" opacity="0.4"/>
+  <rect x="107" y="97" width="28" height="14" rx="2" fill="#66b2b2" opacity="0.5"/>
+  <rect x="140" y="97" width="22" height="14" rx="2" fill="#004c4c" opacity="0.35"/>
+  <!-- Tiny rectangles -->
+  <rect x="15" y="117" width="18" height="11" rx="2" fill="#004c4c" opacity="0.25"/>
+  <rect x="38" y="117" width="22" height="11" rx="2" fill="#66b2b2" opacity="0.3"/>
+  <rect x="65" y="117" width="16" height="11" rx="2" fill="#fbb03b" opacity="0.3"/>
+  <rect x="86" y="117" width="20" height="11" rx="2" fill="#004c4c" opacity="0.2"/>
+  <rect x="111" y="117" width="15" height="11" rx="2" fill="#66b2b2" opacity="0.25"/>
+  <!-- Score indicator lines on right side -->
+  <line x1="175" y1="25" x2="190" y2="25" stroke="#004c4c" stroke-width="3" stroke-linecap="round"/>
+  <line x1="175" y1="55" x2="187" y2="55" stroke="#66b2b2" stroke-width="2.5" stroke-linecap="round"/>
+  <line x1="175" y1="82" x2="183" y2="82" stroke="#fbb03b" stroke-width="2" stroke-linecap="round"/>
+  <line x1="170" y1="103" x2="175" y2="103" stroke="#66b2b2" stroke-width="1.5" stroke-linecap="round" opacity="0.5"/>
+</svg>

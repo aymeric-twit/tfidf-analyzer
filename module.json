@@ -4,6 +4,7 @@
     "description": "Analyse TF-IDF comparative entre une page cible et ses concurrents SERP pour identifier le gap sémantique",
     "version": "1.0.0",
     "icon": "bi-bar-chart-steps",
+    "illustration": "illustration.svg",
     "entry_point": "index.php",
     "sort_order": 55,
     "quota_mode": "api_call",

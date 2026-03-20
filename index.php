@@ -15,7 +15,7 @@
 
 <!-- Navbar (supprimée automatiquement en mode embedded) -->
 <nav class="navbar mb-4">
-    <div class="container d-flex justify-content-between align-items-center">
+    <div class="container-fluid px-lg-4 d-flex justify-content-between align-items-center">
         <span class="navbar-brand mb-0 h1">
             <i class="bi bi-bar-chart-steps me-2"></i><span data-i18n="nav.titre">TF-IDF Analyzer</span>
             <span class="d-block d-sm-inline ms-sm-2" data-i18n="nav.soustitre">Gap sémantique SERP</span>
@@ -29,7 +29,7 @@
     </div>
 </nav>
 
-<div class="container">
+<div class="container-fluid px-lg-4 py-4">
 
     <!-- Formulaire de saisie -->
     <div class="card mb-4">
