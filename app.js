@@ -254,6 +254,10 @@ if (typeof window !== 'undefined') {
             return;
         }
 
+        // Auto-collapse config
+        var configBody = document.getElementById('configBody');
+        if (configBody) { bootstrap.Collapse.getOrCreateInstance(configBody, {toggle:false}).hide(); }
+
         resultats = data.termes || [];
 
         // Mettre à jour les KPI

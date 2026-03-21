@@ -34,10 +34,12 @@
     <!-- Formulaire de saisie -->
     <div class="row g-4 mb-4">
     <div class="col-md-8">
-    <div class="card">
-        <div class="card-header">
+    <div class="card" id="config-card">
+        <div class="card-header d-flex justify-content-between align-items-center">
             <h6 class="mb-0" data-i18n="form.titre"><i class="bi bi-search me-2"></i>Paramètres d'analyse</h6>
+            <button type="button" class="config-toggle" data-bs-toggle="collapse" data-bs-target="#configBody" aria-expanded="true"><i class="bi bi-chevron-down"></i></button>
         </div>
+        <div class="collapse show" id="configBody">
         <div class="card-body">
             <form id="formAnalyse" method="POST">
 
@@ -101,6 +103,7 @@
                     </button>
                 </div>
             </form>
+        </div>
         </div>
     </div>
     </div>
