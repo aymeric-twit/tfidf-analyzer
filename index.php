@@ -67,7 +67,6 @@
                         <div class="form-text" data-i18n="form.aide_url_cible">Page à comparer aux concurrents</div>
                     </div>
                     <div class="col-md-4" id="champMotCle">
-                    <div id="platformCreditsSlot"></div>
                         <label for="motCle" class="form-label" data-i18n="form.label_mot_cle">Mot-clé principal</label>
                         <input type="text" class="form-control" id="motCle" name="mot_cle"
                                placeholder="ex : chaussures running"
@@ -92,6 +91,8 @@
                 </div>
 
                 <div class="mt-3">
+                <div id="platformCreditsSlot" class="mb-3"></div>
+
                     <button type="submit" class="btn btn-primary" id="btnLancer" data-i18n="btn.lancer">
                         <i class="bi bi-play-fill me-1"></i>Lancer l'analyse
                     </button>
