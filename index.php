@@ -32,7 +32,9 @@
 <div class="container-fluid px-lg-4 py-4">
 
     <!-- Formulaire de saisie -->
-    <div class="card mb-4">
+    <div class="row g-4 mb-4">
+    <div class="col-md-8">
+    <div class="card">
         <div class="card-header">
             <h6 class="mb-0" data-i18n="form.titre"><i class="bi bi-search me-2"></i>Paramètres d'analyse</h6>
         </div>
@@ -91,8 +93,6 @@
                 </div>
 
                 <div class="mt-3">
-                <div id="platformCreditsSlot" class="mb-3"></div>
-
                     <button type="submit" class="btn btn-primary" id="btnLancer" data-i18n="btn.lancer">
                         <i class="bi bi-play-fill me-1"></i>Lancer l'analyse
                     </button>
@@ -102,6 +102,33 @@
                 </div>
             </form>
         </div>
+    </div>
+    </div>
+    <div class="col-md-4" id="helpPanel">
+        <div id="platformCreditsSlot"></div>
+        <div class="config-help-panel">
+            <div class="help-title mb-2">
+                <i class="bi bi-info-circle me-1"></i> Comment ça marche
+            </div>
+            <ul>
+                <li>Entrez l'URL de votre <strong>page cible</strong> et le <strong>mot-clé principal</strong>.</li>
+                <li><strong>Mode auto</strong> : les pages concurrentes sont récupérées depuis les résultats Google.</li>
+                <li><strong>Mode manuel</strong> : collez les URLs des pages concurrentes à comparer.</li>
+            </ul>
+            <hr>
+            <div class="help-title mb-0" role="button" data-bs-toggle="collapse" data-bs-target="#helpFonctionnalites" aria-expanded="false">
+                <i class="bi bi-lightbulb me-1"></i> Fonctionnalités <i class="bi bi-chevron-down help-chevron ms-1"></i>
+            </div>
+            <div class="collapse" id="helpFonctionnalites">
+                <ul class="mt-2 mb-0">
+                    <li>Analyse TF-IDF terme par terme vs concurrents</li>
+                    <li>Catégories : termes OK / à renforcer / à ajouter</li>
+                    <li>Score de couverture sémantique (%)</li>
+                    <li>Nombre de termes analysés configurable (10 à 200)</li>
+                </ul>
+            </div>
+        </div>
+    </div>
     </div>
 
     <!-- Barre de progression -->
