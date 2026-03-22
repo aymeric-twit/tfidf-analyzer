@@ -205,7 +205,11 @@ if (typeof window !== 'undefined') {
         eventSource.addEventListener('error', function (e) {
             if (e.data) {
                 var data = JSON.parse(e.data);
-                afficherStatus(data.message || t('error.connexion'), 'error');
+                if (data.code === 429) {
+                    afficherStatus('Crédits épuisés. Quota mensuel atteint.', 'error');
+                } else {
+                    afficherStatus(data.message || t('error.connexion'), 'error');
+                }
             } else if (eventSource && eventSource.readyState === EventSource.CLOSED) {
                 afficherStatus(t('error.connexion_serveur'), 'error');
             } else {

@@ -26,6 +26,15 @@ error_reporting(0);
 
 require_once __DIR__ . '/functions.php';
 
+// ─── Vérification quota ─────────────────────────────────────────────────────
+
+if (class_exists('\\Platform\\Module\\Quota')) {
+    if (!\Platform\Module\Quota::creditsDisponibles('tfidf-analyzer')) {
+        envoyerEvenement('error', ['message' => 'Crédits épuisés', 'code' => 429]);
+        exit;
+    }
+}
+
 // ─── Validation des paramètres ───────────────────────────────────────────────
 
 $urlCible    = trim($_GET['url_cible'] ?? '');
