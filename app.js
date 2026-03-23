@@ -193,7 +193,10 @@ if (typeof window !== 'undefined') {
 
         eventSource.addEventListener('log', function (e) {
             var data = JSON.parse(e.data);
-            mettreAJourProgression(data.percent || 0, data.message || '');
+            var msg = langueActuelle === 'fr'
+                ? (data.message_fr || data.message)
+                : (data.message_en || data.message_fr || data.message);
+            mettreAJourProgression(data.percent || 0, msg || '');
         });
 
         eventSource.addEventListener('done', function (e) {
@@ -205,10 +208,13 @@ if (typeof window !== 'undefined') {
         eventSource.addEventListener('error', function (e) {
             if (e.data) {
                 var data = JSON.parse(e.data);
+                var msg = langueActuelle === 'fr'
+                    ? (data.message_fr || data.message)
+                    : (data.message_en || data.message_fr || data.message);
                 if (data.code === 429) {
-                    afficherStatus('Crédits épuisés. Quota mensuel atteint.', 'error');
+                    afficherStatus(msg || t('error.quota_epuise'), 'error');
                 } else {
-                    afficherStatus(data.message || t('error.connexion'), 'error');
+                    afficherStatus(msg || t('error.connexion'), 'error');
                 }
             } else if (eventSource && eventSource.readyState === EventSource.CLOSED) {
                 afficherStatus(t('error.connexion_serveur'), 'error');

@@ -30,7 +30,12 @@ require_once __DIR__ . '/functions.php';
 
 if (class_exists('\\Platform\\Module\\Quota')) {
     if (!\Platform\Module\Quota::creditsDisponibles('tfidf-analyzer')) {
-        envoyerEvenement('error', ['message' => 'Crédits épuisés', 'code' => 429]);
+        envoyerEvenement('error', [
+            'message' => 'Crédits épuisés',
+            'message_fr' => 'Crédits épuisés',
+            'message_en' => 'Credits exhausted',
+            'code' => 429,
+        ]);
         exit;
     }
 }
@@ -44,22 +49,38 @@ $mode        = trim($_GET['mode'] ?? 'auto'); // "auto" ou "manuel"
 $urlsManuelles = trim($_GET['urls_manuelles'] ?? '');
 
 if ($urlCible === '') {
-    envoyerEvenement('error', ['message' => 'URL cible requise.']);
+    envoyerEvenement('error', [
+        'message' => 'URL cible requise.',
+        'message_fr' => 'URL cible requise.',
+        'message_en' => 'Target URL is required.',
+    ]);
     exit;
 }
 
 if (!filter_var($urlCible, FILTER_VALIDATE_URL)) {
-    envoyerEvenement('error', ['message' => 'URL cible invalide.']);
+    envoyerEvenement('error', [
+        'message' => 'URL cible invalide.',
+        'message_fr' => 'URL cible invalide.',
+        'message_en' => 'Invalid target URL.',
+    ]);
     exit;
 }
 
 if ($mode === 'auto' && $motCle === '') {
-    envoyerEvenement('error', ['message' => 'Mot-clé requis en mode automatique.']);
+    envoyerEvenement('error', [
+        'message' => 'Mot-clé requis en mode automatique.',
+        'message_fr' => 'Mot-clé requis en mode automatique.',
+        'message_en' => 'Keyword is required in automatic mode.',
+    ]);
     exit;
 }
 
 if ($mode === 'manuel' && $urlsManuelles === '') {
-    envoyerEvenement('error', ['message' => 'Aucune URL concurrente fournie.']);
+    envoyerEvenement('error', [
+        'message' => 'Aucune URL concurrente fournie.',
+        'message_fr' => 'Aucune URL concurrente fournie.',
+        'message_en' => 'No competitor URLs provided.',
+    ]);
     exit;
 }
 
@@ -74,6 +95,8 @@ $cache = lireCache($cleCache);
 if ($cache !== null) {
     envoyerEvenement('log', [
         'message' => 'Résultats trouvés en cache (même jour).',
+        'message_fr' => 'Résultats trouvés en cache (même jour).',
+        'message_en' => 'Results found in cache (same day).',
         'percent' => 100,
     ]);
     envoyerEvenement('done', $cache);
@@ -100,14 +123,21 @@ if ($mode === 'manuel') {
     }
 
     if (empty($urlsConcurrents)) {
-        envoyerEvenement('error', ['message' => 'Aucune URL valide trouvée dans la liste.']);
+        envoyerEvenement('error', [
+            'message' => 'Aucune URL valide trouvée dans la liste.',
+            'message_fr' => 'Aucune URL valide trouvée dans la liste.',
+            'message_en' => 'No valid URL found in the list.',
+        ]);
         exit;
     }
 
     $urlsConcurrents = array_slice($urlsConcurrents, 0, NB_CONCURRENTS);
 
+    $nbUrlsManuelles = count($urlsConcurrents);
     envoyerEvenement('log', [
-        'message' => count($urlsConcurrents) . ' URL(s) concurrente(s) fournies.',
+        'message' => $nbUrlsManuelles . ' URL(s) concurrente(s) fournies.',
+        'message_fr' => $nbUrlsManuelles . ' URL(s) concurrente(s) fournies.',
+        'message_en' => $nbUrlsManuelles . ' competitor URL(s) provided.',
         'percent' => 10,
     ]);
 } else {
@@ -116,12 +146,16 @@ if ($mode === 'manuel') {
     if ($cleApi === '') {
         envoyerEvenement('error', [
             'message' => 'Clé API SerpAPI manquante. Configurez SERPAPI_KEY dans le .env de la plateforme.',
+            'message_fr' => 'Clé API SerpAPI manquante. Configurez SERPAPI_KEY dans le .env de la plateforme.',
+            'message_en' => 'SerpAPI key missing. Configure SERPAPI_KEY in the platform .env file.',
         ]);
         exit;
     }
 
     envoyerEvenement('log', [
         'message' => "Recherche Google pour « {$motCle} »…",
+        'message_fr' => "Recherche Google pour « {$motCle} »…",
+        'message_en' => "Google search for \"{$motCle}\"…",
         'percent' => 5,
     ]);
 
@@ -130,6 +164,8 @@ if ($mode === 'manuel') {
     if ($resultatSerp['erreur'] !== '') {
         envoyerEvenement('error', [
             'message' => $resultatSerp['erreur'],
+            'message_fr' => $resultatSerp['erreur'],
+            'message_en' => $resultatSerp['erreur_en'] ?? $resultatSerp['erreur'],
         ]);
         exit;
     }
@@ -139,12 +175,17 @@ if ($mode === 'manuel') {
     if (empty($urlsConcurrents)) {
         envoyerEvenement('error', [
             'message' => 'Aucun résultat organique trouvé. Essayez le mode manuel.',
+            'message_fr' => 'Aucun résultat organique trouvé. Essayez le mode manuel.',
+            'message_en' => 'No organic results found. Try manual mode.',
         ]);
         exit;
     }
 
+    $nbConcurrentsGoogle = count($urlsConcurrents);
     envoyerEvenement('log', [
-        'message' => count($urlsConcurrents) . ' concurrent(s) trouvé(s) sur Google.',
+        'message' => $nbConcurrentsGoogle . ' concurrent(s) trouvé(s) sur Google.',
+        'message_fr' => $nbConcurrentsGoogle . ' concurrent(s) trouvé(s) sur Google.',
+        'message_en' => $nbConcurrentsGoogle . ' competitor(s) found on Google.',
         'percent' => 10,
     ]);
 }
@@ -175,6 +216,8 @@ foreach ($urlsConcurrents as $idx => $urlConc) {
 
     envoyerEvenement('log', [
         'message' => "Analyse concurrent {$numPage}/{$nbUrls} : {$urlAffichee}",
+        'message_fr' => "Analyse concurrent {$numPage}/{$nbUrls} : {$urlAffichee}",
+        'message_en' => "Analyzing competitor {$numPage}/{$nbUrls}: {$urlAffichee}",
         'percent' => $pct,
     ]);
 
@@ -192,6 +235,8 @@ foreach ($urlsConcurrents as $idx => $urlConc) {
 if ($erreursScraping > 0) {
     envoyerEvenement('log', [
         'message' => "{$erreursScraping} page(s) en erreur (ignorées).",
+        'message_fr' => "{$erreursScraping} page(s) en erreur (ignorées).",
+        'message_en' => "{$erreursScraping} page(s) with errors (skipped).",
         'percent' => 76,
     ]);
 }
@@ -200,6 +245,8 @@ if ($erreursScraping > 0) {
 
 envoyerEvenement('log', [
     'message' => 'Analyse de la page cible…',
+    'message_fr' => 'Analyse de la page cible…',
+    'message_en' => 'Analyzing the target page…',
     'percent' => 80,
 ]);
 
@@ -208,6 +255,8 @@ $contenuCible = scraperContenu($urlCible);
 if ($contenuCible['erreur'] !== '') {
     envoyerEvenement('error', [
         'message' => "Impossible de récupérer la page cible : {$contenuCible['erreur']}",
+        'message_fr' => "Impossible de récupérer la page cible : {$contenuCible['erreur']}",
+        'message_en' => "Unable to fetch the target page: {$contenuCible['erreur']}",
     ]);
     exit;
 }
@@ -215,6 +264,8 @@ if ($contenuCible['erreur'] !== '') {
 if ($contenuCible['texte_complet'] === '') {
     envoyerEvenement('error', [
         'message' => 'La page cible ne contient aucun texte exploitable.',
+        'message_fr' => 'La page cible ne contient aucun texte exploitable.',
+        'message_en' => 'The target page contains no usable text.',
     ]);
     exit;
 }
@@ -223,6 +274,8 @@ if ($contenuCible['texte_complet'] === '') {
 
 envoyerEvenement('log', [
     'message' => 'Calcul TF-IDF et analyse du gap sémantique…',
+    'message_fr' => 'Calcul TF-IDF et analyse du gap sémantique…',
+    'message_en' => 'Computing TF-IDF and semantic gap analysis…',
     'percent' => 90,
 ]);
 
@@ -232,7 +285,11 @@ $resultats['mode'] = $mode;
 $resultats['urls_concurrents'] = $urlsConcurrents;
 
 if (!empty($resultats['erreur'])) {
-    envoyerEvenement('error', ['message' => $resultats['erreur']]);
+    envoyerEvenement('error', [
+        'message' => $resultats['erreur'],
+        'message_fr' => $resultats['erreur'],
+        'message_en' => $resultats['erreur_en'] ?? $resultats['erreur'],
+    ]);
     exit;
 }
 
@@ -240,6 +297,8 @@ if (!empty($resultats['erreur'])) {
 
 envoyerEvenement('log', [
     'message' => 'Analyse terminée.',
+    'message_fr' => 'Analyse terminée.',
+    'message_en' => 'Analysis complete.',
     'percent' => 100,
 ]);
 
