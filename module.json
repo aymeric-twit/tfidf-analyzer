@@ -11,6 +11,7 @@
     "default_quota": 100,
     "unite_label": "appels API",
     "display_mode": "embedded",
+    "crawler_mode": "go",
     "env_keys": [
         "SERPAPI_KEY"
     ],
