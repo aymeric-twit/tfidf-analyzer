@@ -176,7 +176,7 @@ function requeteHttp(string $url): array
 {
     // Mode plateforme : client HTTP centralise (WebClient pour le crawl de pages)
     if (defined('PLATFORM_EMBEDDED') && class_exists('\\Platform\\Http\\WebClient')) {
-        $webClient = new \Platform\Http\WebClient('tfidf-analyzer');
+        $webClient = \Platform\Http\WebClient::pourModule('tfidf-analyzer');
         $reponse = $webClient->fetch($url);
         return [
             'code'   => $reponse->statusCode,
